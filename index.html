@@ -120,6 +120,15 @@
                 </div>
 
                 <form id="transactionForm" class="space-y-4">
+                    <!-- Image Upload -->
+                    <div class="p-3 border-2 border-dashed border-neutral-400 dark:border-neutral-500 bg-neutral-50 dark:bg-neutral-900 rounded cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors relative">
+                        <label for="inputImage" class="cursor-pointer flex flex-col items-center justify-center gap-2 text-xs text-center text-neutral-500 dark:text-neutral-400">
+                            <i data-lucide="camera" class="w-6 h-6"></i>
+                            <span id="fileLabel">Upload Screenshot / Bukti (Optional)</span>
+                        </label>
+                        <input type="file" id="inputImage" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                    </div>
+
                     <div class="flex gap-2">
                         <button type="button" id="btnModeBuy" class="flex-1 py-2 font-bold border-2 border-black dark:border-white bg-black dark:bg-white text-white dark:text-black transition-all">BUY (Beli)</button>
                         <button type="button" id="btnModeSell" class="flex-1 py-2 font-bold border-2 border-black dark:border-white bg-white dark:bg-neutral-800 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all">SELL (Jual)</button>
@@ -280,6 +289,8 @@
         const inputStock = document.getElementById('inputStock');
         const inputPrice = document.getElementById('inputPrice');
         const inputLots = document.getElementById('inputLots');
+        const inputImage = document.getElementById('inputImage');
+        const fileLabel = document.getElementById('fileLabel');
         const btnModeBuy = document.getElementById('btnModeBuy');
         const btnModeSell = document.getElementById('btnModeSell');
         const btnSubmit = document.getElementById('btnSubmit');
@@ -338,6 +349,43 @@
              await signOut(auth);
              initAuth();
         });
+
+        // --- File Input Listener ---
+        inputImage.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                fileLabel.textContent = "File Dipilih: " + this.files[0].name.substring(0, 20) + "...";
+            } else {
+                fileLabel.textContent = "Upload Screenshot / Bukti (Optional)";
+            }
+        });
+
+        // --- Image Compression Helper ---
+        const compressImage = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800; // Resize to max width 800px
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // Compress to JPEG 0.6 quality
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = (err) => reject(err);
+                };
+                reader.onerror = (err) => reject(err);
+            });
+        };
 
         function setupDataListener() {
             let txCollectionRef;
@@ -540,10 +588,23 @@
             const stock = inputStock.value.toUpperCase();
             const p = parseFloat(inputPrice.value);
             const l = parseInt(inputLots.value);
+            const file = inputImage.files[0];
 
             if (!stock || !p || !l) {
                 alert("Lengkapi data!");
                 resetBtn(); return;
+            }
+
+            // Image Compression
+            let imageBase64 = null;
+            if (file) {
+                try {
+                    imageBase64 = await compressImage(file);
+                } catch (err) {
+                    console.error("Image compression error", err);
+                    alert("Gagal memproses gambar. Coba gambar lain.");
+                    resetBtn(); return;
+                }
             }
 
             const { userStats } = processData();
@@ -584,12 +645,15 @@
                     lots: l,
                     feeValue: feeVal,
                     totalValue: totalVal,
-                    timestamp: serverTimestamp()
+                    timestamp: serverTimestamp(),
+                    proofImage: imageBase64 // Store small image
                 });
                 
                 inputStock.value = '';
                 inputPrice.value = '';
                 inputLots.value = '';
+                inputImage.value = ''; // Reset file input
+                fileLabel.textContent = "Upload Screenshot / Bukti (Optional)";
                 updateCalcPreview();
                 alert("Order Berhasil! Data sudah tersimpan.");
             } catch (err) {
