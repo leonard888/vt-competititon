@@ -45,21 +45,13 @@
                 <label class="inline-flex items-center cursor-pointer gap-3">
                     <div class="relative w-6 h-6">
                         <!-- Sun Icon (Visible in Light Mode) -->
-                        <i data-lucide="sun" class="w-6 h-6 text-orange-500 absolute inset-0 transition-opacity duration-300 dark:opacity-0 opacity-100"></i>
+                        <i data-lucide="sun" class="absolute inset-0 w-6 h-6 text-orange-500 transition-all duration-300 rotate-0 scale-100 opacity-100 dark:-rotate-90 dark:scale-0 dark:opacity-0"></i>
                         <!-- Moon Icon (Visible in Dark Mode) -->
-                        <i data-lucide="moon" class="w-6 h-6 text-yellow-300 absolute inset-0 transition-opacity duration-300 dark:opacity-100 opacity-0"></i>
+                        <i data-lucide="moon" class="absolute inset-0 w-6 h-6 text-yellow-300 transition-all duration-300 rotate-90 scale-0 opacity-0 dark:rotate-0 dark:scale-100 dark:opacity-100"></i>
                     </div>
                     
                     <input type="checkbox" id="darkModeToggle" class="sr-only peer">
-                    <!-- 
-                        Slider Track: 
-                        Light: bg-gray-300 
-                        Dark: bg-white (via dark:peer-checked:bg-white)
-                        
-                        Slider Ball (after):
-                        Light: after:bg-white
-                        Dark: dark:peer-checked:after:bg-neutral-900 (Jadi Hitam)
-                    -->
+                    <!-- Slider Track & Ball -->
                     <div class="relative w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-black dark:peer-checked:bg-white dark:peer-checked:after:bg-neutral-900 dark:peer-checked:after:border-neutral-900"></div>
                 </label>
 
@@ -97,13 +89,14 @@
                             <th class="py-2 px-2">Rank</th>
                             <th class="py-2 px-2">Trader</th>
                             <th class="py-2 px-2 text-center">Trades</th>
+                            <th class="py-2 px-2 text-right">Equity</th>
                             <th class="py-2 px-2 text-right">Return %</th>
                             <th class="py-2 px-2 text-right">Profit/Loss</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboardBody" class="divide-y divide-neutral-300 dark:divide-neutral-600">
                         <!-- Data will be injected here -->
-                        <tr><td colspan="5" class="py-4 text-center italic opacity-50">Menunggu koneksi data...</td></tr>
+                        <tr><td colspan="6" class="py-4 text-center italic opacity-50">Menunggu koneksi data...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -165,9 +158,15 @@
 
             <!-- PORTFOLIO -->
             <section class="bg-white dark:bg-neutral-800 border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] p-6 h-fit transition-colors duration-300">
-                <div class="flex items-center gap-2 mb-4 border-b-2 border-black dark:border-white pb-2">
-                    <i data-lucide="dollar-sign" width="24"></i>
-                    <h2 class="text-xl font-bold uppercase">My Portfolio</h2>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4 border-b-2 border-black dark:border-white pb-2">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="dollar-sign" width="24"></i>
+                        <h2 class="text-xl font-bold uppercase">My Portfolio</h2>
+                    </div>
+                    <!-- Equity Display -->
+                    <div class="bg-neutral-100 dark:bg-neutral-700 px-3 py-1 rounded text-sm border border-black dark:border-neutral-500">
+                        Total Equity: <span id="userEquityDisplay" class="font-bold">-</span>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -186,7 +185,7 @@
                     </table>
                 </div>
                 <div class="mt-4 text-xs opacity-60 italic border-t border-black dark:border-white pt-2">
-                    *Valuation berdasarkan harga Average. Profit/Loss di Leaderboard berdasarkan Realized PnL.
+                    *Valuation & Equity berdasarkan harga Average (Cost Basis).
                 </div>
             </section>
 
@@ -206,7 +205,6 @@
         const toggle = document.getElementById('darkModeToggle');
         const html = document.documentElement;
 
-        // Init: Check Storage or System Preference
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             html.classList.add('dark');
             toggle.checked = true;
@@ -215,7 +213,6 @@
             toggle.checked = false;
         }
 
-        // Listener
         toggle.addEventListener('change', function() {
             if (this.checked) {
                 html.classList.add('dark');
@@ -226,15 +223,12 @@
             }
         });
         
-        // Init Icons immediately
         if (window.lucide) window.lucide.createIcons();
         // ==========================================
 
-
         // ==========================================
-        // --- KONFIGURASI FIREBASE (WAJIB DIISI) ---
+        // --- KONFIGURASI FIREBASE ---
         // ==========================================
-        // Ganti object di bawah ini dengan config dari Firebase Console Anda.
         const firebaseConfig = {
             apiKey: "AIzaSyCbZjO1dUyzx0080Vl0KiZfhpVtTOFqgS0",
             authDomain: "virtual-trading-competition.firebaseapp.com",
@@ -246,7 +240,6 @@
         };
         // ==========================================
 
-        // Initialize Firebase
         let app, auth, db;
         try {
             if (typeof __firebase_config !== 'undefined') {
@@ -257,35 +250,23 @@
             auth = getAuth(app);
             db = getFirestore(app);
 
-            // --- AKTIFKAN OFFLINE PERSISTENCE ---
-            enableIndexedDbPersistence(db)
-                .catch((err) => {
-                    if (err.code == 'failed-precondition') {
-                        console.warn('Persistence failed: Multiple tabs open');
-                    } else if (err.code == 'unimplemented') {
-                        console.warn('Persistence failed: Browser not supported');
-                    }
-                });
+            enableIndexedDbPersistence(db).catch((err) => console.warn('Persistence warning:', err.code));
         } catch (e) {
             console.error("Firebase Init Error:", e);
-            alert("Error: Konfigurasi Firebase belum diisi dengan benar.");
+            alert("Error: Konfigurasi Firebase salah.");
         }
 
         const COLLECTION_NAME = "transactions";
-        
-        // --- Constants ---
         const INITIAL_CAPITAL = 100000000;
         const FEE_BUY = 0.0015;
         const FEE_SELL = 0.0025;
         const SHARES_PER_LOT = 100;
 
-        // --- State ---
         let currentUser = null;
         let transactions = [];
         let currentTxType = 'BUY';
         let unsubscribeListener = null;
 
-        // --- DOM Elements ---
         const btnLogin = document.getElementById('btnLogin');
         const btnLogout = document.getElementById('btnLogout');
         const userPanel = document.getElementById('userPanel');
@@ -293,8 +274,8 @@
         const userNameDisplay = document.getElementById('userNameDisplay');
         const userIdDisplay = document.getElementById('userIdDisplay');
         const userCashDisplay = document.getElementById('userCashDisplay');
+        const userEquityDisplay = document.getElementById('userEquityDisplay');
         
-        // Form Elements
         const form = document.getElementById('transactionForm');
         const inputStock = document.getElementById('inputStock');
         const inputPrice = document.getElementById('inputPrice');
@@ -303,11 +284,9 @@
         const btnModeSell = document.getElementById('btnModeSell');
         const btnSubmit = document.getElementById('btnSubmit');
 
-        // --- Formatters ---
         const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
         const formatPct = (num) => new Intl.NumberFormat('id-ID', { style: 'percent', minimumFractionDigits: 2 }).format(num/100);
 
-        // --- Initial Auth Flow (CRITICAL) ---
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -317,24 +296,19 @@
                 }
             } catch (error) {
                 console.error("Auth Init Failed:", error);
-                try { await signInAnonymously(auth); } catch(e) { console.error("Anonymous fallback failed", e); }
+                try { await signInAnonymously(auth); } catch(e) {}
             }
         };
 
-        // Start Auth Process immediately
         initAuth();
 
-        // --- Auth State Listener ---
         onAuthStateChanged(auth, (user) => {
             if (unsubscribeListener) {
                 unsubscribeListener();
                 unsubscribeListener = null;
             }
-
             currentUser = user;
-
             if (user) {
-                // User is authenticated
                 if (user.isAnonymous) {
                     btnLogin.classList.remove('hidden');
                     userPanel.classList.add('hidden');
@@ -347,7 +321,6 @@
                     userIdDisplay.textContent = `ID: ${user.uid.slice(0, 6)}...`;
                 }
                 setupDataListener();
-
             } else {
                 btnLogin.classList.remove('hidden');
                 userPanel.classList.add('hidden');
@@ -366,7 +339,6 @@
              initAuth();
         });
 
-        // --- Realtime Data ---
         function setupDataListener() {
             let txCollectionRef;
             if (typeof __app_id !== 'undefined') {
@@ -379,16 +351,17 @@
             
             unsubscribeListener = onSnapshot(q, (snapshot) => {
                 const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Sort by time desc
                 docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                 transactions = docs;
                 renderApp();
             }, (error) => {
                 console.error("Error fetching data:", error);
+                if (error.code === 'permission-denied') {
+                    document.getElementById('leaderboardBody').innerHTML = `<tr><td colspan="6" class="py-4 text-center text-red-500 font-bold">Akses Ditolak: Cek 'Firestore Rules' di Console.</td></tr>`;
+                }
             });
         }
 
-        // --- Data Processing ---
         function processData() {
             const userStats = {};
             const chronologicalTx = [...transactions].sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
@@ -424,11 +397,9 @@
                     stats.portfolio[stock].qty += qty;
                     stats.cash -= tx.totalValue;
                 } else {
-                    // SELL
                     const avg = stats.portfolio[stock].avgPrice;
                     const gross = tx.price * qty;
-                    const cost = avg * qty;
-                    const pnl = (gross - cost) - tx.feeValue;
+                    const pnl = (gross - (avg * qty)) - tx.feeValue;
                     
                     stats.realizedPnL += pnl;
                     stats.portfolio[stock].qty -= qty;
@@ -445,6 +416,7 @@
                 return {
                     userId: uid,
                     ...stats,
+                    equity: equity,
                     totalProfit: profit,
                     returnPct: (profit / INITIAL_CAPITAL) * 100
                 };
@@ -453,14 +425,12 @@
             return { leaderboard, userStats };
         }
 
-        // --- Rendering ---
         function renderApp() {
             const { leaderboard, userStats } = processData();
             
-            // 1. Render Leaderboard
             const tbody = document.getElementById('leaderboardBody');
             if (leaderboard.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center italic opacity-50">Belum ada data trading.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center italic opacity-50">Belum ada data trading.</td></tr>`;
             } else {
                 tbody.innerHTML = leaderboard.map((trader, idx) => {
                     const isMe = currentUser && !currentUser.isAnonymous && currentUser.uid === trader.userId;
@@ -474,6 +444,7 @@
                             <td class="py-3 px-2">#${idx + 1}</td>
                             <td class="py-3 px-2">${trader.username}</td>
                             <td class="py-3 px-2 text-center">${trader.totalTrades}</td>
+                            <td class="py-3 px-2 text-right">${formatIDR(trader.equity)}</td>
                             <td class="py-3 px-2 text-right ${colorClass}">${formatPct(trader.returnPct)}</td>
                             <td class="py-3 px-2 text-right ${colorClass}">${formatIDR(trader.totalProfit)}</td>
                         </tr>
@@ -481,10 +452,14 @@
                 }).join('');
             }
 
-            // 2. Render User Specifics
             if (currentUser && !currentUser.isAnonymous && userStats[currentUser.uid]) {
                 const myStats = userStats[currentUser.uid];
                 userCashDisplay.textContent = formatIDR(myStats.cash);
+                
+                // Calculate and display Equity for current user
+                let myEquity = myStats.cash;
+                Object.values(myStats.portfolio).forEach(pos => myEquity += (pos.qty * pos.avgPrice));
+                userEquityDisplay.textContent = formatIDR(myEquity);
                 
                 const pfBody = document.getElementById('portfolioBody');
                 const positions = Object.keys(myStats.portfolio).filter(k => myStats.portfolio[k].qty > 0);
@@ -506,24 +481,22 @@
                 }
             } else if (currentUser && !currentUser.isAnonymous) {
                  userCashDisplay.textContent = formatIDR(INITIAL_CAPITAL);
+                 userEquityDisplay.textContent = formatIDR(INITIAL_CAPITAL);
             }
 
             if (window.lucide) lucide.createIcons();
         }
 
-        // --- Interaction Logic ---
         function setMode(mode) {
             currentTxType = mode;
             if (mode === 'BUY') {
                 btnModeBuy.classList.add('bg-black', 'text-white', 'dark:bg-white', 'dark:text-black');
                 btnModeBuy.classList.remove('bg-white', 'dark:bg-neutral-800', 'dark:text-white');
-                
                 btnModeSell.classList.remove('bg-black', 'text-white', 'dark:bg-white', 'dark:text-black');
                 btnModeSell.classList.add('bg-white', 'dark:bg-neutral-800', 'dark:text-white');
             } else {
                 btnModeSell.classList.add('bg-black', 'text-white', 'dark:bg-white', 'dark:text-black');
                 btnModeSell.classList.remove('bg-white', 'dark:bg-neutral-800', 'dark:text-white');
-                
                 btnModeBuy.classList.remove('bg-black', 'text-white', 'dark:bg-white', 'dark:text-black');
                 btnModeBuy.classList.add('bg-white', 'dark:bg-neutral-800', 'dark:text-white');
             }
@@ -555,8 +528,6 @@
         }
 
         [inputPrice, inputLots].forEach(el => el.addEventListener('input', updateCalcPreview));
-
-        const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error("Request timed out")), ms));
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -603,33 +574,27 @@
                     txCollectionRef = collection(db, COLLECTION_NAME); 
                 }
 
-                await Promise.race([
-                    addDoc(txCollectionRef, {
-                        userId: currentUser.uid,
-                        username: currentUser.displayName || 'Trader',
-                        type: currentTxType,
-                        stockCode: stock,
-                        price: p,
-                        lots: l,
-                        feeValue: feeVal,
-                        totalValue: totalVal,
-                        timestamp: serverTimestamp()
-                    }),
-                    timeout(10000)
-                ]);
+                await addDoc(txCollectionRef, {
+                    userId: currentUser.uid,
+                    username: currentUser.displayName || 'Trader',
+                    type: currentTxType,
+                    stockCode: stock,
+                    price: p,
+                    lots: l,
+                    feeValue: feeVal,
+                    totalValue: totalVal,
+                    timestamp: serverTimestamp()
+                });
                 
                 inputStock.value = '';
                 inputPrice.value = '';
                 inputLots.value = '';
                 updateCalcPreview();
-                alert("Order Berhasil Dikirim!");
+                alert("Order Berhasil! Data sudah tersimpan.");
             } catch (err) {
                 console.error(err);
-                if (err.message.includes("timed out")) {
-                     alert("Koneksi lambat: Data disimpan offline & akan dikirim saat online.");
-                     inputStock.value = '';
-                     inputPrice.value = '';
-                     inputLots.value = '';
+                if (err.code === 'permission-denied') {
+                     alert("GAGAL: Izin database ditolak. Pastikan 'Firestore Rules' sudah diperbarui di Firebase Console.");
                 } else {
                      alert("Error: " + err.message);
                 }
