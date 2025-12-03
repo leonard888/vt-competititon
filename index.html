@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Trading Competition</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Courier Prime for Typewriter look -->
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Courier Prime', monospace;
+        }
+        /* Utilitas untuk menyembunyikan elemen */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="bg-neutral-100 text-neutral-900 p-4 md:p-8 min-h-screen">
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        
+        <!-- HEADER -->
+        <header class="flex flex-col md:flex-row justify-between items-center border-b-4 border-black pb-4 mb-8">
+            <div class="text-center md:text-left">
+                <h1 class="text-3xl font-black uppercase tracking-tighter">Virtual Trading<br/>Competition</h1>
+                <p class="text-sm mt-1 opacity-70">Initial Capital: Rp 100.000.000</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <!-- Login Button -->
+                <button id="btnLogin" class="hidden flex items-center gap-2 bg-black text-white px-6 py-3 font-bold hover:bg-neutral-800 transition-colors border-2 border-transparent">
+                    <i data-lucide="user" width="18"></i> LOGIN WITH GOOGLE
+                </button>
+                
+                <!-- User Info & Logout -->
+                <div id="userPanel" class="hidden flex items-center gap-4">
+                    <div class="text-right hidden md:block">
+                        <div id="userNameDisplay" class="font-bold">Username</div>
+                        <div id="userIdDisplay" class="text-xs">ID: ...</div>
+                    </div>
+                    <button id="btnLogout" class="bg-white border-2 border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white transition-colors flex items-center gap-2">
+                        <i data-lucide="log-out" width="16"></i> EXIT
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- LEADERBOARD SECTION -->
+        <section class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6">
+            <div class="flex items-center gap-2 mb-4 border-b-2 border-black pb-2">
+                <i data-lucide="trending-up" width="24"></i>
+                <h2 class="text-xl font-bold uppercase">Live Leaderboard</h2>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="border-b-2 border-black uppercase text-xs">
+                        <tr>
+                            <th class="py-2 px-2">Rank</th>
+                            <th class="py-2 px-2">Trader</th>
+                            <th class="py-2 px-2 text-center">Trades</th>
+                            <th class="py-2 px-2 text-right">Return %</th>
+                            <th class="py-2 px-2 text-right">Profit/Loss</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody" class="divide-y divide-neutral-300">
+                        <!-- Data will be injected here -->
+                        <tr><td colspan="5" class="py-4 text-center italic opacity-50">Menunggu koneksi data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- DASHBOARD (Only visible when logged in) -->
+        <div id="dashboard" class="hidden grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- INPUT FORM -->
+            <section class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 h-fit">
+                <div class="flex items-center gap-2 mb-4 border-b-2 border-black pb-2">
+                    <i data-lucide="activity" width="24"></i>
+                    <h2 class="text-xl font-bold uppercase">Input Order</h2>
+                </div>
+                
+                <div class="mb-4 p-3 bg-neutral-100 border border-black text-sm">
+                    <div class="flex justify-between">
+                        <span>Buying Power (Cash):</span>
+                        <span id="userCashDisplay" class="font-bold">-</span>
+                    </div>
+                </div>
+
+                <form id="transactionForm" class="space-y-4">
+                    <div class="flex gap-2">
+                        <button type="button" id="btnModeBuy" class="flex-1 py-2 font-bold border-2 border-black bg-black text-white transition-all">BUY (Beli)</button>
+                        <button type="button" id="btnModeSell" class="flex-1 py-2 font-bold border-2 border-black bg-white hover:bg-neutral-200 transition-all">SELL (Jual)</button>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-1">Kode Saham</label>
+                        <input type="text" id="inputStock" placeholder="contoh: BBCA" maxlength="6" class="w-full border-2 border-black p-2 uppercase focus:outline-none focus:ring-2 focus:ring-black">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1">Harga (Rp)</label>
+                            <input type="number" id="inputPrice" placeholder="0" class="w-full border-2 border-black p-2 focus:outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-1">Lot</label>
+                            <input type="number" id="inputLots" placeholder="0" class="w-full border-2 border-black p-2 focus:outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                    </div>
+
+                    <!-- Calculation Preview -->
+                    <div id="calcPreview" class="hidden text-xs space-y-1 py-2 border-t border-dashed border-black">
+                        <div class="flex justify-between"><span>Value:</span><span id="previewValue">0</span></div>
+                        <div class="flex justify-between"><span>Fee (<span id="previewFeePct">0.15%</span>):</span><span id="previewFee">0</span></div>
+                        <div class="flex justify-between font-bold text-sm border-t border-black mt-1 pt-1">
+                            <span>Total Net:</span><span id="previewTotal">0</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btnSubmit" class="w-full bg-black text-white font-bold py-3 hover:bg-neutral-800 disabled:opacity-50 transition-colors">
+                        SUBMIT ORDER
+                    </button>
+                </form>
+            </section>
+
+            <!-- PORTFOLIO -->
+            <section class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 h-fit">
+                <div class="flex items-center gap-2 mb-4 border-b-2 border-black pb-2">
+                    <i data-lucide="dollar-sign" width="24"></i>
+                    <h2 class="text-xl font-bold uppercase">My Portfolio</h2>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="border-b-2 border-black uppercase text-xs bg-neutral-100">
+                            <tr>
+                                <th class="py-2 px-2">Code</th>
+                                <th class="py-2 px-2 text-right">Avg Price</th>
+                                <th class="py-2 px-2 text-right">Lot</th>
+                                <th class="py-2 px-2 text-right">Valuation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portfolioBody" class="divide-y divide-neutral-200">
+                            <tr><td colspan="4" class="py-4 text-center italic opacity-50">Portofolio kosong.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 text-xs opacity-60 italic border-t border-black pt-2">
+                    *Valuation berdasarkan harga Average. Profit/Loss di Leaderboard berdasarkan Realized PnL.
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script type="module">
+        // Import Firebase SDKs (Modular)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, signInWithCustomToken, signInAnonymously, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ==========================================
+        // --- KONFIGURASI FIREBASE (WAJIB DIISI) ---
+        // ==========================================
+        // Ganti object di bawah ini dengan config dari Firebase Console Anda.
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbZjO1dUyzx0080Vl0KiZfhpVtTOFqgS0",
+            authDomain: "virtual-trading-competition.firebaseapp.com",
+            projectId: "virtual-trading-competition",
+            storageBucket: "virtual-trading-competition.firebasestorage.app",
+            messagingSenderId: "212356990848",
+            appId: "1:212356990848:web:ca8eebe3cb7043be882365",
+            measurementId: "G-2Y2L55HJ08"
+        };
+        // ==========================================
+
+        // Initialize Firebase
+        let app, auth, db;
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                 app = initializeApp(JSON.parse(__firebase_config));
+            } else {
+                 app = initializeApp(firebaseConfig);
+            }
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase Init Error:", e);
+            alert("Error: Konfigurasi Firebase belum diisi dengan benar.");
+        }
+
+        const COLLECTION_NAME = "transactions";
+        
+        // --- Constants ---
+        const INITIAL_CAPITAL = 100000000;
+        const FEE_BUY = 0.0015;
+        const FEE_SELL = 0.0025;
+        const SHARES_PER_LOT = 100;
+
+        // --- State ---
+        let currentUser = null;
+        let transactions = [];
+        let currentTxType = 'BUY';
+        let unsubscribeListener = null;
+
+        // --- DOM Elements ---
+        const btnLogin = document.getElementById('btnLogin');
+        const btnLogout = document.getElementById('btnLogout');
+        const userPanel = document.getElementById('userPanel');
+        const dashboard = document.getElementById('dashboard');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const userCashDisplay = document.getElementById('userCashDisplay');
+        
+        // Form Elements
+        const form = document.getElementById('transactionForm');
+        const inputStock = document.getElementById('inputStock');
+        const inputPrice = document.getElementById('inputPrice');
+        const inputLots = document.getElementById('inputLots');
+        const btnModeBuy = document.getElementById('btnModeBuy');
+        const btnModeSell = document.getElementById('btnModeSell');
+        const btnSubmit = document.getElementById('btnSubmit');
+
+        // --- Formatters ---
+        const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+        const formatPct = (num) => new Intl.NumberFormat('id-ID', { style: 'percent', minimumFractionDigits: 2 }).format(num/100);
+
+        // --- Initial Auth Flow (CRITICAL) ---
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    // Check if already signed in is handled by persistence, 
+                    // but if not, we fallback to anonymous to allow reading public data.
+                    // onAuthStateChanged will trigger, so we don't need to force it here unless we are sure.
+                    // However, to be safe for first load:
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth Init Failed:", error);
+                // Try fallback to anonymous if custom token failed
+                try { await signInAnonymously(auth); } catch(e) { console.error("Anonymous fallback failed", e); }
+            }
+        };
+
+        // Start Auth Process immediately
+        initAuth();
+
+        // --- Auth State Listener ---
+        onAuthStateChanged(auth, (user) => {
+            if (unsubscribeListener) {
+                unsubscribeListener();
+                unsubscribeListener = null;
+            }
+
+            currentUser = user;
+
+            if (user) {
+                // User is authenticated (either Google or Anonymous)
+                
+                if (user.isAnonymous) {
+                    // Anonymous: View Only Mode
+                    btnLogin.classList.remove('hidden');
+                    userPanel.classList.add('hidden');
+                    dashboard.classList.add('hidden');
+                } else {
+                    // Google User: Trading Mode
+                    btnLogin.classList.add('hidden');
+                    userPanel.classList.remove('hidden');
+                    dashboard.classList.remove('hidden');
+                    userNameDisplay.textContent = user.displayName || 'Trader';
+                    userIdDisplay.textContent = `ID: ${user.uid.slice(0, 6)}...`;
+                }
+
+                // NOW it's safe to setup data listener
+                setupDataListener();
+
+            } else {
+                // Not logged in (Wait for initAuth to finish or user to click login)
+                btnLogin.classList.remove('hidden');
+                userPanel.classList.add('hidden');
+                dashboard.classList.add('hidden');
+            }
+            
+            renderApp(); 
+        });
+
+        btnLogin.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(err => alert("Login Gagal: " + err.message));
+        });
+
+        btnLogout.addEventListener('click', async () => {
+             await signOut(auth);
+             // After sign out, re-initialize anonymous login for viewing
+             initAuth();
+        });
+
+        // --- Realtime Data ---
+        function setupDataListener() {
+            let txCollectionRef;
+            if (typeof __app_id !== 'undefined') {
+                 txCollectionRef = collection(db, 'artifacts', __app_id, 'public', 'data', COLLECTION_NAME);
+            } else {
+                 txCollectionRef = collection(db, COLLECTION_NAME); 
+            }
+
+            const q = query(txCollectionRef);
+            
+            unsubscribeListener = onSnapshot(q, (snapshot) => {
+                const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Sort by time desc
+                docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                transactions = docs;
+                renderApp();
+            }, (error) => {
+                console.error("Error fetching data:", error);
+            });
+        }
+
+        // --- Data Processing ---
+        function processData() {
+            const userStats = {};
+            const chronologicalTx = [...transactions].sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+
+            chronologicalTx.forEach(tx => {
+                const uid = tx.userId;
+                if (!userStats[uid]) {
+                    userStats[uid] = {
+                        username: tx.username,
+                        cash: INITIAL_CAPITAL,
+                        portfolio: {},
+                        totalTrades: 0,
+                        realizedPnL: 0
+                    };
+                }
+
+                const stats = userStats[uid];
+                const stock = tx.stockCode;
+                const qty = tx.lots * SHARES_PER_LOT;
+                
+                stats.totalTrades++;
+
+                if (!stats.portfolio[stock]) stats.portfolio[stock] = { qty: 0, avgPrice: 0 };
+
+                if (tx.type === 'BUY') {
+                    const oldQty = stats.portfolio[stock].qty;
+                    const oldAvg = stats.portfolio[stock].avgPrice;
+                    const newQty = oldQty + qty;
+                    
+                    if (newQty > 0) {
+                        stats.portfolio[stock].avgPrice = ((oldQty * oldAvg) + (qty * tx.price)) / newQty;
+                    }
+                    stats.portfolio[stock].qty += qty;
+                    stats.cash -= tx.totalValue;
+                } else {
+                    // SELL
+                    const avg = stats.portfolio[stock].avgPrice;
+                    const gross = tx.price * qty;
+                    const cost = avg * qty;
+                    const pnl = (gross - cost) - tx.feeValue;
+                    
+                    stats.realizedPnL += pnl;
+                    stats.portfolio[stock].qty -= qty;
+                    stats.cash += (gross - tx.feeValue);
+                }
+            });
+
+            const leaderboard = Object.keys(userStats).map(uid => {
+                const stats = userStats[uid];
+                let equity = stats.cash;
+                Object.values(stats.portfolio).forEach(pos => equity += (pos.qty * pos.avgPrice));
+                
+                const profit = equity - INITIAL_CAPITAL;
+                return {
+                    userId: uid,
+                    ...stats,
+                    totalProfit: profit,
+                    returnPct: (profit / INITIAL_CAPITAL) * 100
+                };
+            }).sort((a, b) => b.totalProfit - a.totalProfit);
+
+            return { leaderboard, userStats };
+        }
+
+        // --- Rendering ---
+        function renderApp() {
+            const { leaderboard, userStats } = processData();
+            
+            // 1. Render Leaderboard
+            const tbody = document.getElementById('leaderboardBody');
+            if (leaderboard.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center italic opacity-50">Belum ada data trading.</td></tr>`;
+            } else {
+                tbody.innerHTML = leaderboard.map((trader, idx) => {
+                    const isMe = currentUser && !currentUser.isAnonymous && currentUser.uid === trader.userId;
+                    const colorClass = trader.totalProfit >= 0 ? 'text-green-600' : 'text-red-600';
+                    return `
+                        <tr class="${isMe ? 'bg-neutral-200 font-bold' : ''}">
+                            <td class="py-3 px-2">#${idx + 1}</td>
+                            <td class="py-3 px-2">${trader.username}</td>
+                            <td class="py-3 px-2 text-center">${trader.totalTrades}</td>
+                            <td class="py-3 px-2 text-right ${colorClass}">${formatPct(trader.returnPct)}</td>
+                            <td class="py-3 px-2 text-right ${colorClass}">${formatIDR(trader.totalProfit)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // 2. Render User Specifics
+            if (currentUser && !currentUser.isAnonymous && userStats[currentUser.uid]) {
+                const myStats = userStats[currentUser.uid];
+                userCashDisplay.textContent = formatIDR(myStats.cash);
+                
+                const pfBody = document.getElementById('portfolioBody');
+                const positions = Object.keys(myStats.portfolio).filter(k => myStats.portfolio[k].qty > 0);
+                
+                if (positions.length === 0) {
+                    pfBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center italic opacity-50">Portofolio kosong.</td></tr>`;
+                } else {
+                    pfBody.innerHTML = positions.map(key => {
+                        const item = myStats.portfolio[key];
+                        return `
+                            <tr>
+                                <td class="py-2 px-2 font-bold">${key}</td>
+                                <td class="py-2 px-2 text-right">${formatIDR(item.avgPrice)}</td>
+                                <td class="py-2 px-2 text-right">${item.qty / SHARES_PER_LOT}</td>
+                                <td class="py-2 px-2 text-right font-bold">${formatIDR(item.qty * item.avgPrice)}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } else if (currentUser && !currentUser.isAnonymous) {
+                 userCashDisplay.textContent = formatIDR(INITIAL_CAPITAL);
+            }
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // --- Interaction Logic ---
+        function setMode(mode) {
+            currentTxType = mode;
+            if (mode === 'BUY') {
+                btnModeBuy.classList.add('bg-black', 'text-white');
+                btnModeBuy.classList.remove('bg-white');
+                btnModeSell.classList.remove('bg-black', 'text-white');
+                btnModeSell.classList.add('bg-white');
+            } else {
+                btnModeSell.classList.add('bg-black', 'text-white');
+                btnModeSell.classList.remove('bg-white');
+                btnModeBuy.classList.remove('bg-black', 'text-white');
+                btnModeBuy.classList.add('bg-white');
+            }
+            updateCalcPreview();
+        }
+        
+        btnModeBuy.addEventListener('click', () => setMode('BUY'));
+        btnModeSell.addEventListener('click', () => setMode('SELL'));
+
+        function updateCalcPreview() {
+            const p = parseFloat(inputPrice.value) || 0;
+            const l = parseInt(inputLots.value) || 0;
+            const previewEl = document.getElementById('calcPreview');
+            
+            if (p > 0 && l > 0) {
+                previewEl.classList.remove('hidden');
+                const gross = p * l * SHARES_PER_LOT;
+                const feeRate = currentTxType === 'BUY' ? FEE_BUY : FEE_SELL;
+                const fee = gross * feeRate;
+                const net = currentTxType === 'BUY' ? gross + fee : gross - fee;
+
+                document.getElementById('previewValue').textContent = formatIDR(gross);
+                document.getElementById('previewFeePct').textContent = currentTxType === 'BUY' ? '0.15%' : '0.25%';
+                document.getElementById('previewFee').textContent = formatIDR(fee);
+                document.getElementById('previewTotal').textContent = formatIDR(net);
+            } else {
+                previewEl.classList.add('hidden');
+            }
+        }
+
+        [inputPrice, inputLots].forEach(el => el.addEventListener('input', updateCalcPreview));
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || currentUser.isAnonymous) return;
+            
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = "PROCESSING...";
+
+            const stock = inputStock.value.toUpperCase();
+            const p = parseFloat(inputPrice.value);
+            const l = parseInt(inputLots.value);
+
+            if (!stock || !p || !l) {
+                alert("Lengkapi data!");
+                resetBtn(); return;
+            }
+
+            const { userStats } = processData();
+            const myStats = userStats[currentUser.uid] || { cash: INITIAL_CAPITAL, portfolio: {} };
+
+            if (currentTxType === 'SELL') {
+                const currentQty = myStats.portfolio[stock]?.qty || 0;
+                if (currentQty < l * SHARES_PER_LOT) {
+                    alert(`Gagal: Lot tidak cukup. Punya: ${currentQty/SHARES_PER_LOT}`);
+                    resetBtn(); return;
+                }
+            } else {
+                const totalReq = (p * l * SHARES_PER_LOT) * (1 + FEE_BUY);
+                if (myStats.cash < totalReq) {
+                    alert(`Gagal: Saldo tidak cukup. Butuh ${formatIDR(totalReq)}`);
+                    resetBtn(); return;
+                }
+            }
+
+            const gross = p * l * SHARES_PER_LOT;
+            const feeVal = gross * (currentTxType === 'BUY' ? FEE_BUY : FEE_SELL);
+            const totalVal = currentTxType === 'BUY' ? gross + feeVal : gross - feeVal;
+
+            try {
+                let txCollectionRef;
+                if (typeof __app_id !== 'undefined') {
+                    txCollectionRef = collection(db, 'artifacts', __app_id, 'public', 'data', COLLECTION_NAME);
+                } else {
+                    txCollectionRef = collection(db, COLLECTION_NAME); 
+                }
+
+                await addDoc(txCollectionRef, {
+                    userId: currentUser.uid,
+                    username: currentUser.displayName || 'Trader',
+                    type: currentTxType,
+                    stockCode: stock,
+                    price: p,
+                    lots: l,
+                    feeValue: feeVal,
+                    totalValue: totalVal,
+                    timestamp: serverTimestamp()
+                });
+                
+                inputStock.value = '';
+                inputPrice.value = '';
+                inputLots.value = '';
+                updateCalcPreview();
+                alert("Order Berhasil!");
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
+            } finally {
+                resetBtn();
+            }
+        });
+
+        function resetBtn() {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = `SUBMIT ${currentTxType} ORDER`;
+        }
+        
+        if (window.lucide) lucide.createIcons();
+    </script>
+</body>
+</html>
