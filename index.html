@@ -8,6 +8,13 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Tailwind Config for Dark Mode -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    
     <!-- Google Fonts: Courier Prime for Typewriter look -->
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     
@@ -22,45 +29,70 @@
         .hidden { display: none !important; }
     </style>
 </head>
-<body class="bg-neutral-100 text-neutral-900 p-4 md:p-8 min-h-screen">
+<body class="bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 p-4 md:p-8 min-h-screen transition-colors duration-300">
 
     <div class="max-w-4xl mx-auto space-y-8">
         
         <!-- HEADER -->
-        <header class="flex flex-col md:flex-row justify-between items-center border-b-4 border-black pb-4 mb-8">
-            <div class="text-center md:text-left">
+        <header class="flex flex-col md:flex-row justify-between items-center border-b-4 border-black dark:border-white pb-4 mb-8">
+            <div class="text-center md:text-left mb-4 md:mb-0">
                 <h1 class="text-3xl font-black uppercase tracking-tighter">Virtual Trading<br/>Competition</h1>
                 <p class="text-sm mt-1 opacity-70">Initial Capital: Rp 100.000.000</p>
             </div>
-            <div class="mt-4 md:mt-0">
-                <!-- Login Button -->
-                <button id="btnLogin" class="hidden flex items-center gap-2 bg-black text-white px-6 py-3 font-bold hover:bg-neutral-800 transition-colors border-2 border-transparent">
-                    <i data-lucide="user" width="18"></i> LOGIN WITH GOOGLE
-                </button>
-                
-                <!-- User Info & Logout -->
-                <div id="userPanel" class="hidden flex items-center gap-4">
-                    <div class="text-right hidden md:block">
-                        <div id="userNameDisplay" class="font-bold">Username</div>
-                        <div id="userIdDisplay" class="text-xs">ID: ...</div>
+            
+            <div class="flex flex-col items-end gap-4">
+                <!-- Dark Mode Toggle Slider with Icons -->
+                <label class="inline-flex items-center cursor-pointer gap-3">
+                    <div class="relative w-6 h-6">
+                        <!-- Sun Icon (Visible in Light Mode) -->
+                        <i data-lucide="sun" class="w-6 h-6 text-orange-500 absolute inset-0 transition-opacity duration-300 dark:opacity-0 opacity-100"></i>
+                        <!-- Moon Icon (Visible in Dark Mode) -->
+                        <i data-lucide="moon" class="w-6 h-6 text-yellow-300 absolute inset-0 transition-opacity duration-300 dark:opacity-100 opacity-0"></i>
                     </div>
-                    <button id="btnLogout" class="bg-white border-2 border-black px-4 py-2 text-sm font-bold hover:bg-black hover:text-white transition-colors flex items-center gap-2">
-                        <i data-lucide="log-out" width="16"></i> EXIT
+                    
+                    <input type="checkbox" id="darkModeToggle" class="sr-only peer">
+                    <!-- 
+                        Slider Track: 
+                        Light: bg-gray-300 
+                        Dark: bg-white (via dark:peer-checked:bg-white)
+                        
+                        Slider Ball (after):
+                        Light: after:bg-white
+                        Dark: dark:peer-checked:after:bg-neutral-900 (Jadi Hitam)
+                    -->
+                    <div class="relative w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-black dark:peer-checked:bg-white dark:peer-checked:after:bg-neutral-900 dark:peer-checked:after:border-neutral-900"></div>
+                </label>
+
+                <div class="mt-2">
+                    <!-- Login Button -->
+                    <button id="btnLogin" class="hidden flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-6 py-3 font-bold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors border-2 border-transparent">
+                        <i data-lucide="user" width="18"></i> LOGIN WITH GOOGLE
                     </button>
+                    
+                    <!-- User Info & Logout -->
+                    <div id="userPanel" class="hidden flex items-center gap-4">
+                        <div class="text-right hidden md:block">
+                            <div id="userNameDisplay" class="font-bold">Username</div>
+                            <div id="userIdDisplay" class="text-xs">ID: ...</div>
+                        </div>
+                        <button id="btnLogout" class="bg-white dark:bg-neutral-800 border-2 border-black dark:border-white px-4 py-2 text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors flex items-center gap-2">
+                            <i data-lucide="log-out" width="16"></i> EXIT
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- LEADERBOARD SECTION -->
-        <section class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6">
-            <div class="flex items-center gap-2 mb-4 border-b-2 border-black pb-2">
+        <section class="bg-white dark:bg-neutral-800 border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] p-6 transition-colors duration-300">
+            <div class="flex items-center gap-2 mb-4 border-b-2 border-black dark:border-white pb-2">
                 <i data-lucide="trending-up" width="24"></i>
                 <h2 class="text-xl font-bold uppercase">Live Leaderboard</h2>
             </div>
             
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="border-b-2 border-black uppercase text-xs">
+                    <thead class="border-b-2 border-black dark:border-white uppercase text-xs">
                         <tr>
                             <th class="py-2 px-2">Rank</th>
                             <th class="py-2 px-2">Trader</th>
@@ -69,7 +101,7 @@
                             <th class="py-2 px-2 text-right">Profit/Loss</th>
                         </tr>
                     </thead>
-                    <tbody id="leaderboardBody" class="divide-y divide-neutral-300">
+                    <tbody id="leaderboardBody" class="divide-y divide-neutral-300 dark:divide-neutral-600">
                         <!-- Data will be injected here -->
                         <tr><td colspan="5" class="py-4 text-center italic opacity-50">Menunggu koneksi data...</td></tr>
                     </tbody>
@@ -81,13 +113,13 @@
         <div id="dashboard" class="hidden grid grid-cols-1 md:grid-cols-2 gap-8">
             
             <!-- INPUT FORM -->
-            <section class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 h-fit">
-                <div class="flex items-center gap-2 mb-4 border-b-2 border-black pb-2">
+            <section class="bg-white dark:bg-neutral-800 border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] p-6 h-fit transition-colors duration-300">
+                <div class="flex items-center gap-2 mb-4 border-b-2 border-black dark:border-white pb-2">
                     <i data-lucide="activity" width="24"></i>
                     <h2 class="text-xl font-bold uppercase">Input Order</h2>
                 </div>
                 
-                <div class="mb-4 p-3 bg-neutral-100 border border-black text-sm">
+                <div class="mb-4 p-3 bg-neutral-100 dark:bg-neutral-700 border border-black dark:border-white text-sm">
                     <div class="flex justify-between">
                         <span>Buying Power (Cash):</span>
                         <span id="userCashDisplay" class="font-bold">-</span>
@@ -96,51 +128,51 @@
 
                 <form id="transactionForm" class="space-y-4">
                     <div class="flex gap-2">
-                        <button type="button" id="btnModeBuy" class="flex-1 py-2 font-bold border-2 border-black bg-black text-white transition-all">BUY (Beli)</button>
-                        <button type="button" id="btnModeSell" class="flex-1 py-2 font-bold border-2 border-black bg-white hover:bg-neutral-200 transition-all">SELL (Jual)</button>
+                        <button type="button" id="btnModeBuy" class="flex-1 py-2 font-bold border-2 border-black dark:border-white bg-black dark:bg-white text-white dark:text-black transition-all">BUY (Beli)</button>
+                        <button type="button" id="btnModeSell" class="flex-1 py-2 font-bold border-2 border-black dark:border-white bg-white dark:bg-neutral-800 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all">SELL (Jual)</button>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold uppercase mb-1">Kode Saham</label>
-                        <input type="text" id="inputStock" placeholder="contoh: BBCA" maxlength="6" class="w-full border-2 border-black p-2 uppercase focus:outline-none focus:ring-2 focus:ring-black">
+                        <input type="text" id="inputStock" placeholder="contoh: BBCA" maxlength="6" class="w-full border-2 border-black dark:border-white bg-white dark:bg-neutral-900 p-2 uppercase focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white">
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase mb-1">Harga (Rp)</label>
-                            <input type="number" id="inputPrice" placeholder="0" class="w-full border-2 border-black p-2 focus:outline-none focus:ring-2 focus:ring-black">
+                            <input type="number" id="inputPrice" placeholder="0" class="w-full border-2 border-black dark:border-white bg-white dark:bg-neutral-900 p-2 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white">
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase mb-1">Lot</label>
-                            <input type="number" id="inputLots" placeholder="0" class="w-full border-2 border-black p-2 focus:outline-none focus:ring-2 focus:ring-black">
+                            <input type="number" id="inputLots" placeholder="0" class="w-full border-2 border-black dark:border-white bg-white dark:bg-neutral-900 p-2 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white">
                         </div>
                     </div>
 
                     <!-- Calculation Preview -->
-                    <div id="calcPreview" class="hidden text-xs space-y-1 py-2 border-t border-dashed border-black">
+                    <div id="calcPreview" class="hidden text-xs space-y-1 py-2 border-t border-dashed border-black dark:border-white">
                         <div class="flex justify-between"><span>Value:</span><span id="previewValue">0</span></div>
                         <div class="flex justify-between"><span>Fee (<span id="previewFeePct">0.15%</span>):</span><span id="previewFee">0</span></div>
-                        <div class="flex justify-between font-bold text-sm border-t border-black mt-1 pt-1">
+                        <div class="flex justify-between font-bold text-sm border-t border-black dark:border-white mt-1 pt-1">
                             <span>Total Net:</span><span id="previewTotal">0</span>
                         </div>
                     </div>
 
-                    <button type="submit" id="btnSubmit" class="w-full bg-black text-white font-bold py-3 hover:bg-neutral-800 disabled:opacity-50 transition-colors">
+                    <button type="submit" id="btnSubmit" class="w-full bg-black dark:bg-white text-white dark:text-black font-bold py-3 hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50 transition-colors">
                         SUBMIT ORDER
                     </button>
                 </form>
             </section>
 
             <!-- PORTFOLIO -->
-            <section class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 h-fit">
-                <div class="flex items-center gap-2 mb-4 border-b-2 border-black pb-2">
+            <section class="bg-white dark:bg-neutral-800 border-2 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] p-6 h-fit transition-colors duration-300">
+                <div class="flex items-center gap-2 mb-4 border-b-2 border-black dark:border-white pb-2">
                     <i data-lucide="dollar-sign" width="24"></i>
                     <h2 class="text-xl font-bold uppercase">My Portfolio</h2>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="border-b-2 border-black uppercase text-xs bg-neutral-100">
+                        <thead class="border-b-2 border-black dark:border-white uppercase text-xs bg-neutral-100 dark:bg-neutral-700">
                             <tr>
                                 <th class="py-2 px-2">Code</th>
                                 <th class="py-2 px-2 text-right">Avg Price</th>
@@ -148,12 +180,12 @@
                                 <th class="py-2 px-2 text-right">Valuation</th>
                             </tr>
                         </thead>
-                        <tbody id="portfolioBody" class="divide-y divide-neutral-200">
+                        <tbody id="portfolioBody" class="divide-y divide-neutral-200 dark:divide-neutral-600">
                             <tr><td colspan="4" class="py-4 text-center italic opacity-50">Portofolio kosong.</td></tr>
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-4 text-xs opacity-60 italic border-t border-black pt-2">
+                <div class="mt-4 text-xs opacity-60 italic border-t border-black dark:border-white pt-2">
                     *Valuation berdasarkan harga Average. Profit/Loss di Leaderboard berdasarkan Realized PnL.
                 </div>
             </section>
@@ -166,7 +198,38 @@
         // Import Firebase SDKs (Modular)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, signInWithCustomToken, signInAnonymously, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ==========================================
+        // --- DARK MODE LOGIC ---
+        // ==========================================
+        const toggle = document.getElementById('darkModeToggle');
+        const html = document.documentElement;
+
+        // Init: Check Storage or System Preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+            toggle.checked = true;
+        } else {
+            html.classList.remove('dark');
+            toggle.checked = false;
+        }
+
+        // Listener
+        toggle.addEventListener('change', function() {
+            if (this.checked) {
+                html.classList.add('dark');
+                localStorage.theme = 'dark';
+            } else {
+                html.classList.remove('dark');
+                localStorage.theme = 'light';
+            }
+        });
+        
+        // Init Icons immediately
+        if (window.lucide) window.lucide.createIcons();
+        // ==========================================
+
 
         // ==========================================
         // --- KONFIGURASI FIREBASE (WAJIB DIISI) ---
@@ -193,6 +256,16 @@
             }
             auth = getAuth(app);
             db = getFirestore(app);
+
+            // --- AKTIFKAN OFFLINE PERSISTENCE ---
+            enableIndexedDbPersistence(db)
+                .catch((err) => {
+                    if (err.code == 'failed-precondition') {
+                        console.warn('Persistence failed: Multiple tabs open');
+                    } else if (err.code == 'unimplemented') {
+                        console.warn('Persistence failed: Browser not supported');
+                    }
+                });
         } catch (e) {
             console.error("Firebase Init Error:", e);
             alert("Error: Konfigurasi Firebase belum diisi dengan benar.");
@@ -240,15 +313,10 @@
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    // Check if already signed in is handled by persistence, 
-                    // but if not, we fallback to anonymous to allow reading public data.
-                    // onAuthStateChanged will trigger, so we don't need to force it here unless we are sure.
-                    // However, to be safe for first load:
                     await signInAnonymously(auth);
                 }
             } catch (error) {
                 console.error("Auth Init Failed:", error);
-                // Try fallback to anonymous if custom token failed
                 try { await signInAnonymously(auth); } catch(e) { console.error("Anonymous fallback failed", e); }
             }
         };
@@ -266,32 +334,25 @@
             currentUser = user;
 
             if (user) {
-                // User is authenticated (either Google or Anonymous)
-                
+                // User is authenticated
                 if (user.isAnonymous) {
-                    // Anonymous: View Only Mode
                     btnLogin.classList.remove('hidden');
                     userPanel.classList.add('hidden');
                     dashboard.classList.add('hidden');
                 } else {
-                    // Google User: Trading Mode
                     btnLogin.classList.add('hidden');
                     userPanel.classList.remove('hidden');
                     dashboard.classList.remove('hidden');
                     userNameDisplay.textContent = user.displayName || 'Trader';
                     userIdDisplay.textContent = `ID: ${user.uid.slice(0, 6)}...`;
                 }
-
-                // NOW it's safe to setup data listener
                 setupDataListener();
 
             } else {
-                // Not logged in (Wait for initAuth to finish or user to click login)
                 btnLogin.classList.remove('hidden');
                 userPanel.classList.add('hidden');
                 dashboard.classList.add('hidden');
             }
-            
             renderApp(); 
         });
 
@@ -302,7 +363,6 @@
 
         btnLogout.addEventListener('click', async () => {
              await signOut(auth);
-             // After sign out, re-initialize anonymous login for viewing
              initAuth();
         });
 
@@ -404,9 +464,13 @@
             } else {
                 tbody.innerHTML = leaderboard.map((trader, idx) => {
                     const isMe = currentUser && !currentUser.isAnonymous && currentUser.uid === trader.userId;
-                    const colorClass = trader.totalProfit >= 0 ? 'text-green-600' : 'text-red-600';
+                    const colorClass = trader.totalProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+                    const rowClass = isMe 
+                        ? 'bg-neutral-200 dark:bg-neutral-700 font-bold' 
+                        : 'hover:bg-neutral-50 dark:hover:bg-neutral-700';
+                        
                     return `
-                        <tr class="${isMe ? 'bg-neutral-200 font-bold' : ''}">
+                        <tr class="${rowClass}">
                             <td class="py-3 px-2">#${idx + 1}</td>
                             <td class="py-3 px-2">${trader.username}</td>
                             <td class="py-3 px-2 text-center">${trader.totalTrades}</td>
@@ -431,7 +495,7 @@
                     pfBody.innerHTML = positions.map(key => {
                         const item = myStats.portfolio[key];
                         return `
-                            <tr>
+                            <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-700">
                                 <td class="py-2 px-2 font-bold">${key}</td>
                                 <td class="py-2 px-2 text-right">${formatIDR(item.avgPrice)}</td>
                                 <td class="py-2 px-2 text-right">${item.qty / SHARES_PER_LOT}</td>
@@ -451,15 +515,17 @@
         function setMode(mode) {
             currentTxType = mode;
             if (mode === 'BUY') {
-                btnModeBuy.classList.add('bg-black', 'text-white');
-                btnModeBuy.classList.remove('bg-white');
-                btnModeSell.classList.remove('bg-black', 'text-white');
-                btnModeSell.classList.add('bg-white');
+                btnModeBuy.classList.add('bg-black', 'text-white', 'dark:bg-white', 'dark:text-black');
+                btnModeBuy.classList.remove('bg-white', 'dark:bg-neutral-800', 'dark:text-white');
+                
+                btnModeSell.classList.remove('bg-black', 'text-white', 'dark:bg-white', 'dark:text-black');
+                btnModeSell.classList.add('bg-white', 'dark:bg-neutral-800', 'dark:text-white');
             } else {
-                btnModeSell.classList.add('bg-black', 'text-white');
-                btnModeSell.classList.remove('bg-white');
-                btnModeBuy.classList.remove('bg-black', 'text-white');
-                btnModeBuy.classList.add('bg-white');
+                btnModeSell.classList.add('bg-black', 'text-white', 'dark:bg-white', 'dark:text-black');
+                btnModeSell.classList.remove('bg-white', 'dark:bg-neutral-800', 'dark:text-white');
+                
+                btnModeBuy.classList.remove('bg-black', 'text-white', 'dark:bg-white', 'dark:text-black');
+                btnModeBuy.classList.add('bg-white', 'dark:bg-neutral-800', 'dark:text-white');
             }
             updateCalcPreview();
         }
@@ -489,6 +555,8 @@
         }
 
         [inputPrice, inputLots].forEach(el => el.addEventListener('input', updateCalcPreview));
+
+        const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error("Request timed out")), ms));
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -535,26 +603,36 @@
                     txCollectionRef = collection(db, COLLECTION_NAME); 
                 }
 
-                await addDoc(txCollectionRef, {
-                    userId: currentUser.uid,
-                    username: currentUser.displayName || 'Trader',
-                    type: currentTxType,
-                    stockCode: stock,
-                    price: p,
-                    lots: l,
-                    feeValue: feeVal,
-                    totalValue: totalVal,
-                    timestamp: serverTimestamp()
-                });
+                await Promise.race([
+                    addDoc(txCollectionRef, {
+                        userId: currentUser.uid,
+                        username: currentUser.displayName || 'Trader',
+                        type: currentTxType,
+                        stockCode: stock,
+                        price: p,
+                        lots: l,
+                        feeValue: feeVal,
+                        totalValue: totalVal,
+                        timestamp: serverTimestamp()
+                    }),
+                    timeout(10000)
+                ]);
                 
                 inputStock.value = '';
                 inputPrice.value = '';
                 inputLots.value = '';
                 updateCalcPreview();
-                alert("Order Berhasil!");
+                alert("Order Berhasil Dikirim!");
             } catch (err) {
                 console.error(err);
-                alert("Error: " + err.message);
+                if (err.message.includes("timed out")) {
+                     alert("Koneksi lambat: Data disimpan offline & akan dikirim saat online.");
+                     inputStock.value = '';
+                     inputPrice.value = '';
+                     inputLots.value = '';
+                } else {
+                     alert("Error: " + err.message);
+                }
             } finally {
                 resetBtn();
             }
