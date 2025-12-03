@@ -27,16 +27,92 @@
         }
         /* Utilitas untuk menyembunyikan elemen */
         .hidden { display: none !important; }
+
+        /* --- GRID SCAN BACKGROUND STYLES --- */
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -2; /* Paling belakang */
+            pointer-events: none;
+            background-size: 50px 50px; /* Ukuran kotak grid */
+            /* Garis Grid Light Mode (Hitam transparan) */
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px);
+            /* Masking agar grid memudar di pinggir layar (Vignette effect) */
+            mask-image: radial-gradient(ellipse at center, black 40%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 100%);
+        }
+
+        /* Garis Grid Dark Mode (Putih transparan) */
+        .dark .grid-bg {
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px);
+        }
+
+        /* Animasi Sinar Scan */
+        .scan-beam {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 300px; /* Tinggi sinar */
+            z-index: -1; /* Di atas grid, di bawah konten */
+            pointer-events: none;
+            /* Gradient Sinar Light Mode */
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.1), transparent);
+            animation: scan 5s linear infinite;
+            top: -300px; /* Posisi awal di atas layar */
+        }
+
+        /* Gradient Sinar Dark Mode */
+        .dark .scan-beam {
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(calc(100vh + 300px)); }
+        }
+
+        /* --- DOLLAR RAIN ANIMATION --- */
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+        
+        .dollar-particle {
+            position: fixed;
+            top: -10vh;
+            color: #16a34a; /* Green-600 */
+            font-weight: bold;
+            z-index: 100; /* Paling atas */
+            pointer-events: none;
+            user-select: none;
+            animation-name: fall;
+            animation-timing-function: linear;
+        }
+        
+        .dark .dollar-particle {
+            color: #4ade80; /* Green-400 */
+        }
     </style>
 </head>
-<body class="bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 p-4 md:p-8 min-h-screen transition-colors duration-300">
+<body class="bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 p-4 md:p-8 min-h-screen transition-colors duration-300 relative">
 
-    <div class="max-w-4xl mx-auto space-y-8">
+    <!-- BACKGROUND ELEMENTS -->
+    <div class="grid-bg"></div>
+    <div class="scan-beam"></div>
+
+    <div class="max-w-4xl mx-auto space-y-8 relative z-10">
         
         <!-- HEADER -->
         <header class="flex flex-col md:flex-row justify-between items-center border-b-4 border-black dark:border-white pb-4 mb-8">
             <div class="text-center md:text-left mb-4 md:mb-0">
-                <h1 class="text-3xl font-black uppercase tracking-tighter">Virtual Trading<br/>Competition</h1>
+                <h1 class="text-3xl font-black uppercase tracking-tighter cursor-default">
+                    <span class="scramble-text block" data-value="VIRTUAL TRADING">VIRTUAL TRADING</span>
+                    <span class="scramble-text block" data-value="COMPETITION">COMPETITION</span>
+                </h1>
                 <p class="text-sm mt-1 opacity-70">Initial Capital: Rp 100.000.000</p>
             </div>
             
@@ -207,6 +283,71 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, signInWithCustomToken, signInAnonymously, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ==========================================
+        // --- DOLLAR RAIN ANIMATION LOGIC ---
+        // ==========================================
+        const triggerDollarRain = () => {
+            const container = document.body;
+            const count = 50; // Number of dollar signs
+
+            for (let i = 0; i < count; i++) {
+                const el = document.createElement('div');
+                el.innerText = '$';
+                el.classList.add('dollar-particle');
+                
+                // Random properties
+                const left = Math.random() * 100; // vw
+                const duration = Math.random() * 1.5 + 1; // 1s - 2.5s
+                const size = Math.random() * 2 + 1.5; // 1.5rem - 3.5rem
+                const delay = Math.random() * 0.5; // Stagger start
+
+                el.style.left = `${left}vw`;
+                el.style.animationDuration = `${duration}s`;
+                el.style.animationDelay = `${delay}s`;
+                el.style.fontSize = `${size}rem`;
+                
+                container.appendChild(el);
+
+                // Cleanup
+                setTimeout(() => {
+                    el.remove();
+                }, (duration + delay) * 1000);
+            }
+        };
+
+        // ==========================================
+        // --- TEXT SCRAMBLE LOGIC ---
+        // ==========================================
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+-=[]{}|;':\",./<>?";
+
+        document.querySelectorAll('.scramble-text').forEach(element => {
+            element.addEventListener('mouseover', event => {
+                let iteration = 0;
+                const originalText = element.dataset.value;
+                
+                clearInterval(element.interval);
+
+                element.interval = setInterval(() => {
+                    event.target.innerText = originalText
+                        .split("")
+                        .map((letter, index) => {
+                            if(index < iteration) {
+                                return originalText[index];
+                            }
+                            return letters[Math.floor(Math.random() * letters.length)];
+                        })
+                        .join("");
+                    
+                    if(iteration >= originalText.length){ 
+                        clearInterval(element.interval);
+                    }
+                    
+                    iteration += 1 / 3;
+                }, 30);
+            });
+        });
+        // ==========================================
 
         // ==========================================
         // --- DARK MODE LOGIC ---
@@ -655,6 +796,11 @@
                 inputImage.value = ''; // Reset file input
                 fileLabel.textContent = "Upload Screenshot / Bukti (Optional)";
                 updateCalcPreview();
+                
+                // --- TRIGGER DOLLAR RAIN HERE ---
+                triggerDollarRain();
+                // --------------------------------
+
                 alert("Order Berhasil! Data sudah tersimpan.");
             } catch (err) {
                 console.error(err);
